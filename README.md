@@ -1,0 +1,49 @@
+# Group Scholar Policy Change Tracker
+
+Command-line tool for logging scholarship policy changes, auditing impact, and generating quick summaries for the Group Scholar team.
+
+## Features
+- Create and store policy change entries in PostgreSQL
+- List recent changes with effective dates, owners, and impact level
+- Summarize changes by category for weekly reporting
+- Seed the database with realistic sample entries
+
+## Tech
+- C++17
+- libpq (PostgreSQL client library)
+
+## Setup
+1. Install libpq:
+   ```sh
+   brew install libpq
+   ```
+2. Build:
+   ```sh
+   make
+   ```
+3. Set PostgreSQL environment variables (production only):
+   ```sh
+   export PGHOST="db-acupinir.groupscholar.com"
+   export PGPORT="23947"
+   export PGUSER="ralph"
+   export PGPASSWORD="<password>"
+   export PGDATABASE="postgres"
+   ```
+
+## Usage
+```sh
+./bin/gs-policy-change init
+./bin/gs-policy-change seed
+./bin/gs-policy-change add --title "FAFSA rule update" --category "Compliance" --impact "High" --effective-date "2026-02-05" --owner "Policy Ops" --notes "Updated documentation required."
+./bin/gs-policy-change list --limit 10
+./bin/gs-policy-change report
+```
+
+## Testing
+```sh
+make test
+```
+
+## Notes
+- Each project should use its own schema. This project uses `groupscholar_policy_change_tracker`.
+- Do not commit credentials. Use environment variables only.
