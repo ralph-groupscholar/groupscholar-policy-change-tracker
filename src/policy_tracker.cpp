@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 std::string sanitize_for_sql(const std::string &value) {
   std::string escaped;
@@ -58,6 +59,48 @@ std::string build_seed_sql() {
          "'Boost weight for community impact from 15% to 20%.'),"
          "('Renewal documentation simplification','Renewals','Low','2026-02-01','Program Manager',"
          "'Removed redundant income verification for continuing scholars.');";
+}
+
+std::string build_where_clause(const QueryFilters &filters,
+                               const std::vector<std::string> &base_conditions) {
+  std::vector<std::string> conditions = base_conditions;
+  if (!filters.category.empty()) {
+    conditions.push_back("category = '" + sanitize_for_sql(filters.category) + "'");
+  }
+  if (!filters.impact_level.empty()) {
+    conditions.push_back("impact_level = '" + sanitize_for_sql(filters.impact_level) + "'");
+  }
+  if (!filters.owner.empty()) {
+    conditions.push_back("owner = '" + sanitize_for_sql(filters.owner) + "'");
+  }
+  if (!filters.since_date.empty()) {
+    conditions.push_back("effective_date >= '" + sanitize_for_sql(filters.since_date) + "'");
+  }
+  if (!filters.until_date.empty()) {
+    conditions.push_back("effective_date <= '" + sanitize_for_sql(filters.until_date) + "'");
+  }
+  if (conditions.empty()) {
+    return "";
+  }
+  std::ostringstream sql;
+  sql << " where ";
+  for (size_t i = 0; i < conditions.size(); ++i) {
+    if (i > 0) {
+      sql << " and ";
+    }
+    sql << conditions[i];
+  }
+  return sql.str();
+}
+
+std::string resolve_report_group_column(const std::string &by) {
+  if (by == "impact") {
+    return "impact_level";
+  }
+  if (by == "owner") {
+    return "owner";
+  }
+  return "category";
 }
 
 std::vector<ReportRow> parse_report_rows(const std::string &raw) {

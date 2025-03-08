@@ -22,6 +22,18 @@ int main() {
   auto seed = build_seed_sql();
   assert(seed.find("policy_changes") != std::string::npos);
 
+  QueryFilters filters;
+  filters.category = "Compliance";
+  filters.impact_level = "High";
+  filters.since_date = "2026-01-01";
+  auto where = build_where_clause(filters, {});
+  assert(where.find("category = 'Compliance'") != std::string::npos);
+  assert(where.find("impact_level = 'High'") != std::string::npos);
+  assert(where.find("effective_date >= '2026-01-01'") != std::string::npos);
+
+  auto group_col = resolve_report_group_column("impact");
+  assert(group_col == "impact_level");
+
   std::cout << "All tests passed.\n";
   return 0;
 }
