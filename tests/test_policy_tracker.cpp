@@ -22,6 +22,9 @@ int main() {
   auto seed = build_seed_sql();
   assert(seed.find("policy_changes") != std::string::npos);
 
+  auto select_sql = build_select_by_id_sql(3);
+  assert(select_sql.find("where id = 3") != std::string::npos);
+
   QueryFilters filters;
   filters.category = "Compliance";
   filters.impact_level = "High";

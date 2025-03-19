@@ -61,6 +61,17 @@ std::string build_seed_sql() {
          "'Removed redundant income verification for continuing scholars.');";
 }
 
+std::string build_select_by_id_sql(long id) {
+  if (id <= 0) {
+    throw std::runtime_error("id must be a positive integer");
+  }
+  std::ostringstream sql;
+  sql << "select id, title, category, impact_level, effective_date, owner, notes, created_at "
+         "from groupscholar_policy_change_tracker.policy_changes where id = "
+      << id << ";";
+  return sql.str();
+}
+
 std::string build_where_clause(const QueryFilters &filters,
                                const std::vector<std::string> &base_conditions) {
   std::vector<std::string> conditions = base_conditions;

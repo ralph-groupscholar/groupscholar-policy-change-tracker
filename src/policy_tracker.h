@@ -31,6 +31,7 @@ std::string require_non_empty(const std::string &label, const std::string &value
 std::string build_insert_sql(const PolicyChangeInput &input);
 std::string build_schema_sql();
 std::string build_seed_sql();
+std::string build_select_by_id_sql(long id);
 std::string build_where_clause(const QueryFilters &filters,
                                const std::vector<std::string> &base_conditions);
 std::string resolve_report_group_column(const std::string &by);

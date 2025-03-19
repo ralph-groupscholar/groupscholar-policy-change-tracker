@@ -16,6 +16,7 @@ void print_usage() {
       << "  init                      Create schema and tables\n"
       << "  seed                      Insert sample policy changes\n"
       << "  add --title <title> --category <category> --impact <level> \\n--effective-date <YYYY-MM-DD> --owner <owner> [--notes <notes>]\n"
+      << "  show --id <id>             Show full details for a change\n"
       << "  list [--limit <n>] [--category <category>] [--impact <level>] [--owner <owner>] [--since <YYYY-MM-DD>] [--until <YYYY-MM-DD>]\n"
       << "                            List policy changes with optional filters\n"
       << "  report [--by category|impact|owner] [--since <YYYY-MM-DD>] [--until <YYYY-MM-DD>]\n"
@@ -129,11 +130,38 @@ void print_upcoming(PGresult *result) {
   }
 }
 
+void print_detail(PGresult *result) {
+  int rows = PQntuples(result);
+  if (rows == 0) {
+    std::cout << "No policy change found.\n";
+    return;
+  }
+  std::cout << "ID: " << PQgetvalue(result, 0, 0) << "\n";
+  std::cout << "Title: " << PQgetvalue(result, 0, 1) << "\n";
+  std::cout << "Category: " << PQgetvalue(result, 0, 2) << "\n";
+  std::cout << "Impact: " << PQgetvalue(result, 0, 3) << "\n";
+  std::cout << "Effective: " << PQgetvalue(result, 0, 4) << "\n";
+  std::cout << "Owner: " << PQgetvalue(result, 0, 5) << "\n";
+  std::cout << "Notes: " << PQgetvalue(result, 0, 6) << "\n";
+  std::cout << "Created: " << PQgetvalue(result, 0, 7) << "\n";
+}
+
 int parse_int_or_default(const std::string &value, int fallback) {
   if (value.empty()) {
     return fallback;
   }
   return std::stoi(value);
+}
+
+long parse_long_required(const std::string &value, const std::string &label) {
+  if (value.empty()) {
+    throw std::runtime_error(label + " is required");
+  }
+  long parsed = std::stol(value);
+  if (parsed <= 0) {
+    throw std::runtime_error(label + " must be a positive integer");
+  }
+  return parsed;
 }
 } // namespace
 
@@ -174,6 +202,15 @@ int main(int argc, char **argv) {
       auto result = exec_or_throw(conn, sql);
       PQclear(result);
       std::cout << "Policy change added.\n";
+    } else if (command == "show") {
+      auto flags = parse_flags(argc, argv);
+      auto it = flags.find("--id");
+      std::string id_value = (it == flags.end()) ? "" : it->second;
+      long id = parse_long_required(id_value, "--id");
+      auto sql = build_select_by_id_sql(id);
+      auto result = exec_or_throw(conn, sql);
+      print_detail(result);
+      PQclear(result);
     } else if (command == "list") {
       int limit = 20;
       auto flags = parse_flags(argc, argv);
