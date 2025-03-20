@@ -8,3 +8,8 @@
 - Added helper SQL builder coverage and updated README usage.
 - Added filtered list/report queries plus upcoming-effective-date tracking.
 - Expanded SQL helper utilities and tests for filter/report behaviors.
+
+## 2026-02-08
+- Added CSV export command with filters/limit and file output.
+- Introduced CSV escaping helper and tests.
+- Updated CLI usage/help and README examples for export.

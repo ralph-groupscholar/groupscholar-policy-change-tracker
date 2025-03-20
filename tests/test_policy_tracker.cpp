@@ -37,6 +37,10 @@ int main() {
   auto group_col = resolve_report_group_column("impact");
   assert(group_col == "impact_level");
 
+  assert(escape_csv("plain") == "plain");
+  assert(escape_csv("needs,comma") == "\"needs,comma\"");
+  assert(escape_csv("quote\"here") == "\"quote\"\"here\"");
+
   std::cout << "All tests passed.\n";
   return 0;
 }

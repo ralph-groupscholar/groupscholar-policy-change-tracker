@@ -2,6 +2,8 @@
 
 #include <libpq-fe.h>
 
+#include <fstream>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <stdexcept>
@@ -17,6 +19,8 @@ void print_usage() {
       << "  seed                      Insert sample policy changes\n"
       << "  add --title <title> --category <category> --impact <level> \\n--effective-date <YYYY-MM-DD> --owner <owner> [--notes <notes>]\n"
       << "  show --id <id>             Show full details for a change\n"
+      << "  export --output <path> [--limit <n>] [--category <category>] [--impact <level>] [--owner <owner>] [--since <YYYY-MM-DD>] [--until <YYYY-MM-DD>]\n"
+      << "                            Export changes to CSV\n"
       << "  list [--limit <n>] [--category <category>] [--impact <level>] [--owner <owner>] [--since <YYYY-MM-DD>] [--until <YYYY-MM-DD>]\n"
       << "                            List policy changes with optional filters\n"
       << "  report [--by category|impact|owner] [--since <YYYY-MM-DD>] [--until <YYYY-MM-DD>]\n"
@@ -133,7 +137,7 @@ void print_upcoming(PGresult *result) {
 void print_detail(PGresult *result) {
   int rows = PQntuples(result);
   if (rows == 0) {
-    std::cout << "No policy change found.\n";
+    std::cout << "No policy change found for that id.\n";
     return;
   }
   std::cout << "ID: " << PQgetvalue(result, 0, 0) << "\n";
@@ -144,6 +148,25 @@ void print_detail(PGresult *result) {
   std::cout << "Owner: " << PQgetvalue(result, 0, 5) << "\n";
   std::cout << "Notes: " << PQgetvalue(result, 0, 6) << "\n";
   std::cout << "Created: " << PQgetvalue(result, 0, 7) << "\n";
+}
+
+void write_csv(PGresult *result, const std::string &path) {
+  std::ofstream out(path);
+  if (!out) {
+    throw std::runtime_error("Unable to open output file: " + path);
+  }
+  out << "id,effective_date,category,impact_level,title,owner,notes,created_at\n";
+  int rows = PQntuples(result);
+  for (int i = 0; i < rows; ++i) {
+    out << PQgetvalue(result, i, 0) << ","
+        << escape_csv(PQgetvalue(result, i, 1)) << ","
+        << escape_csv(PQgetvalue(result, i, 2)) << ","
+        << escape_csv(PQgetvalue(result, i, 3)) << ","
+        << escape_csv(PQgetvalue(result, i, 4)) << ","
+        << escape_csv(PQgetvalue(result, i, 5)) << ","
+        << escape_csv(PQgetvalue(result, i, 6)) << ","
+        << escape_csv(PQgetvalue(result, i, 7)) << "\n";
+  }
 }
 
 int parse_int_or_default(const std::string &value, int fallback) {
@@ -227,6 +250,33 @@ int main(int argc, char **argv) {
           std::to_string(limit) + ";";
       auto result = exec_or_throw(conn, sql);
       print_list(result);
+      PQclear(result);
+    } else if (command == "export") {
+      int limit = 500;
+      auto flags = parse_flags(argc, argv);
+      auto limit_it = flags.find("--limit");
+      if (limit_it != flags.end()) {
+        limit = parse_int_or_default(limit_it->second, limit);
+      }
+      if (limit < 1) {
+        throw std::runtime_error("--limit must be at least 1");
+      }
+      auto output_it = flags.find("--output");
+      std::string output_path = (output_it == flags.end()) ? "" : output_it->second;
+      if (output_path.empty()) {
+        throw std::runtime_error("--output is required");
+      }
+      auto filters = filters_from_flags(flags);
+      std::string where = build_where_clause(filters, {});
+      std::string sql =
+          "select id, effective_date, category, impact_level, title, owner, notes, created_at "
+          "from groupscholar_policy_change_tracker.policy_changes" +
+          where + " order by effective_date desc, id desc limit " +
+          std::to_string(limit) + ";";
+      auto result = exec_or_throw(conn, sql);
+      write_csv(result, output_path);
+      std::cout << "Exported " << PQntuples(result) << " rows to " << output_path
+                << ".\n";
       PQclear(result);
     } else if (command == "report") {
       auto flags = parse_flags(argc, argv);

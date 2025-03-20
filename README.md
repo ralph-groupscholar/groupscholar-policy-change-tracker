@@ -9,6 +9,7 @@ Command-line tool for logging scholarship policy changes, auditing impact, and g
 - Summarize changes by category, impact, or owner for weekly reporting
 - Filter lists and reports by date range, category, impact, or owner
 - Track upcoming effective dates within a configurable window
+- Export filtered policy changes to CSV for sharing
 - Seed the database with realistic sample entries
 
 ## Tech
@@ -41,6 +42,7 @@ Command-line tool for logging scholarship policy changes, auditing impact, and g
 ./bin/gs-policy-change show --id 3
 ./bin/gs-policy-change list --limit 10 --category "Compliance" --since "2026-01-01"
 ./bin/gs-policy-change report --by impact --since "2026-01-01" --until "2026-03-01"
+./bin/gs-policy-change export --output ./policy-changes.csv --since "2026-01-01" --limit 200
 ./bin/gs-policy-change upcoming --days 45 --owner "Policy Ops"
 ```
 

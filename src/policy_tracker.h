@@ -35,6 +35,7 @@ std::string build_select_by_id_sql(long id);
 std::string build_where_clause(const QueryFilters &filters,
                                const std::vector<std::string> &base_conditions);
 std::string resolve_report_group_column(const std::string &by);
+std::string escape_csv(const std::string &value);
 std::vector<ReportRow> parse_report_rows(const std::string &raw);
 
 #endif

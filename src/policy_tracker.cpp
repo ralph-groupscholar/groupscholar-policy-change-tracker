@@ -16,6 +16,30 @@ std::string sanitize_for_sql(const std::string &value) {
   return escaped;
 }
 
+std::string escape_csv(const std::string &value) {
+  bool needs_quotes = false;
+  for (char c : value) {
+    if (c == ',' || c == '"' || c == '\n' || c == '\r') {
+      needs_quotes = true;
+      break;
+    }
+  }
+  if (!needs_quotes) {
+    return value;
+  }
+  std::string escaped;
+  escaped.reserve(value.size() + 2);
+  escaped.push_back('"');
+  for (char c : value) {
+    if (c == '"') {
+      escaped.push_back('"');
+    }
+    escaped.push_back(c);
+  }
+  escaped.push_back('"');
+  return escaped;
+}
+
 std::string require_non_empty(const std::string &label, const std::string &value) {
   if (value.empty()) {
     throw std::runtime_error(label + " is required");
